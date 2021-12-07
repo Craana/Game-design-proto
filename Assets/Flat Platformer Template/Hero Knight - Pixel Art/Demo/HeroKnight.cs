@@ -8,8 +8,9 @@ public class HeroKnight : MonoBehaviour {
     [SerializeField] float      m_rollForce = 6.0f;
     [SerializeField] bool       m_noBlood = false;
     [SerializeField] GameObject m_slideDust;
-    
 
+    AudioSource audioSource;
+   [SerializeField] private audioManager        audioManager;
     private Animator            m_animator;
     private Rigidbody2D         m_body2d;
     private Sensor_HeroKnight   m_groundSensor;
@@ -26,7 +27,7 @@ public class HeroKnight : MonoBehaviour {
     private float               m_delayToIdle = 0.0f;
     private float               m_rollDuration = 8.0f / 14.0f;
     private float               m_rollCurrentTime;
-
+    private bool ismoving;
 
     // Use this for initialization
     void Start ()
@@ -38,7 +39,8 @@ public class HeroKnight : MonoBehaviour {
         m_wallSensorR2 = transform.Find("WallSensor_R2").GetComponent<Sensor_HeroKnight>();
         m_wallSensorL1 = transform.Find("WallSensor_L1").GetComponent<Sensor_HeroKnight>();
         m_wallSensorL2 = transform.Find("WallSensor_L2").GetComponent<Sensor_HeroKnight>();
-        
+        audioManager = GetComponent<audioManager>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -77,12 +79,14 @@ public class HeroKnight : MonoBehaviour {
         {
             GetComponent<SpriteRenderer>().flipX = false;
             m_facingDirection = 1;
+           
         }
             
         else if (inputX < 0)
         {
             GetComponent<SpriteRenderer>().flipX = true;
             m_facingDirection = -1;
+            
         }
 
         // Move
@@ -112,20 +116,23 @@ public class HeroKnight : MonoBehaviour {
         else if(Input.GetMouseButtonDown(0) && m_timeSinceAttack > 0.25f && !m_rolling)
         {
             m_currentAttack++;
-          
+
             // Loop back to one after third attack
             if (m_currentAttack > 3)
+            
                 m_currentAttack = 1;
 
             // Reset Attack combo if time since last attack is too large
             if (m_timeSinceAttack > 1.0f)
-                m_currentAttack = 1;
+            
+            m_currentAttack = 1;
 
             // Call one of three attack animations "Attack1", "Attack2", "Attack3"
             m_animator.SetTrigger("Attack" + m_currentAttack);
-
+            
             // Reset timer
             m_timeSinceAttack = 0.0f;
+            audioManager.Play("sword");
         }
 
         // Block
@@ -173,7 +180,42 @@ public class HeroKnight : MonoBehaviour {
                 if(m_delayToIdle < 0)
                     m_animator.SetInteger("AnimState", 0);
         }
+
+
+        if (m_body2d.velocity.x != 0)
+        {
+            ismoving = true;
+        }
+        else
+        {
+            ismoving = false;
+        }
+
+        if (ismoving == true)
+        {
+            if (!audioSource.isPlaying)
+            {
+                audioSource.Play();
+            }
+            
+        }
+        else
+        {
+            audioSource.Stop();
+        }
+        if (!m_grounded)
+        {
+            audioSource.Stop();
+        }
+
+        if (Input.GetKey(KeyCode.Escape))
+        {
+            Application.Quit();
+            Debug.Log("Application quit");
+        }
     }
+
+
 
 
     // Animation Events
